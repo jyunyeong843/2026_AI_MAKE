@@ -144,6 +144,37 @@
   white-space: nowrap;
 }
 
+/* 방향 안내 화살표 — 오른쪽 상단(헤더 아래)에 배경 없이 떠오른다(음성과 동시).
+   현재 위치 점의 이동을 가리지 않도록 중앙이 아닌 우상단에 배치한다. */
+.turn-arrow-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 16px 16px 0 0;
+  pointer-events: none;
+  z-index: 550;
+}
+
+.turn-arrow {
+  width: 110px;
+  height: 110px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35));
+  animation: arrow-pop 0.25s ease-out;
+}
+
+@keyframes arrow-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .route-info {
   background: #fff;
   border-top: 1px solid var(--cream-border);
@@ -167,4 +198,30 @@
   color: var(--text);
   font-size: 16px;
   margin-top: 8px;
+}
+
+.guide-btn {
+  margin-top: 18px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: var(--green);
+  color: #fff;
+  font-size: 21px;
+  font-weight: 700;
+  transition: background 0.15s ease, transform 0.08s ease;
+}
+
+.guide-btn:hover {
+  background: var(--green-dark);
+}
+
+.guide-btn:active {
+  transform: scale(0.98);
+}
+
+.guide-btn:disabled {
+  background: #b9c2ad;
+  cursor: default;
 }

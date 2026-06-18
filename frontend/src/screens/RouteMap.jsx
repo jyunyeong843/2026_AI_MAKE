@@ -16,8 +16,8 @@ const ARRIVE_M = 20 // 도착지 이내로 들어오면 도착 처리
 // 두 번째 화면 — 지도.
 // 1) 시작과 동시에 "목적지까지의 경로안내를 시작합니다" TTS 출력
 // 2) GPS 현재 위치 + 선택 도착지까지의 추천 우회 경로를 Leaflet 으로 그린다.
-// 3) GPS 를 실시간 추적해 현재 위치 점을 이동시키고, 남은 거리/시간을 갱신하며,
-//    경로를 벗어나면 진동 + 음성으로 재안내한다.
+// 3) GPS 실시간 추적(모바일) 또는 "시연 안내"(데스크톱)로 현재 위치 점이 경로를 따라
+//    이동하며, 남은 거리/시간 갱신·갈림길 TTS·도착 안내를 한다.
 //    (경사/강수/비용 판단은 백엔드 채점 결과를 그대로 표시할 뿐 — CLAUDE.md 규칙)
 export default function RouteMap({ destination, onBack }) {
   const mapEl = useRef(null)
@@ -26,10 +26,16 @@ export default function RouteMap({ destination, onBack }) {
   const routeCoordsRef = useRef(null) // 추천 경로 좌표 [[lat,lng],...]
   const offRouteRef = useRef(false) // 직전 '경로 이탈' 상태 (중복 안내 방지)
   const arrivedRef = useRef(false)
+  const watchStopRef = useRef(null) // 실시간 GPS 추적 해제 함수
+  const simStopRef = useRef(null) // 시연 주행 중단 함수
+  const progressFnRef = useRef(null) // updateProgress 참조 (버튼 핸들러에서 호출)
+  const arrowTimerRef = useRef(null) // 방향 화살표 자동 숨김 타이머
 
   const [status, setStatus] = useState('loading') // loading | ready
   const [result, setResult] = useState(null) // 채점 엔진 출력
   const [live, setLive] = useState(null) // { remainingM, etaMin, offRoute, arrived }
+  const [navigating, setNavigating] = useState(false) // 시연 주행 중 여부
+  const [turnArrow, setTurnArrow] = useState(null) // 'left' | 'right' | 'straight' | null
 
   // TTS 안내 — 화면 진입 시 1회.
   useEffect(() => {
@@ -39,7 +45,6 @@ export default function RouteMap({ destination, onBack }) {
   // GPS → 경로 요청 → 지도 렌더 → 실시간 추적
   useEffect(() => {
     let cancelled = false
-    let clearWatch = null
 
     async function run() {
       // GPS 실패 시 기본 출발지로 폴백
@@ -88,7 +93,7 @@ export default function RouteMap({ destination, onBack }) {
           lineJoin: 'round',
         }).addTo(map)
 
-        // 현재 위치 — 녹색 점 (실시간으로 이동시킬 마커)
+        // 현재 위치 — 녹색 점 (이동시킬 마커)
         locMarkerRef.current = L.circleMarker([drawOrigin.lat, drawOrigin.lng], {
           radius: 11,
           color: '#fff',
@@ -112,10 +117,9 @@ export default function RouteMap({ destination, onBack }) {
       // 초기 진행 상태 한 번 계산
       updateProgress(drawOrigin)
 
-      // ── 실시간 GPS 추적 시작 ──
-      clearWatch = watchPosition((pos) => {
-        if (cancelled) return
-        // 위치 점 이동 + 지도 따라가기
+      // ── 실시간 GPS 추적 시작 (모바일에서 실제 이동 시) ──
+      watchStopRef.current = watchPosition((pos) => {
+        if (cancelled || navigating) return // 시연 주행 중이면 GPS 무시
         if (locMarkerRef.current) locMarkerRef.current.setLatLng([pos.lat, pos.lng])
         if (mapRef.current) mapRef.current.panTo([pos.lat, pos.lng])
         updateProgress(pos)
@@ -136,7 +140,12 @@ export default function RouteMap({ destination, onBack }) {
         speak('목적지에 도착했습니다')
         if (navigator.vibrate) navigator.vibrate(200)
         setLive({ remainingM: 0, etaMin: 0, offRoute: false, arrived: true })
-        if (clearWatch) clearWatch()
+        setNavigating(false)
+        if (watchStopRef.current) watchStopRef.current()
+        if (simStopRef.current) {
+          simStopRef.current()
+          simStopRef.current = null
+        }
         return
       }
 
@@ -152,10 +161,14 @@ export default function RouteMap({ destination, onBack }) {
       setLive({ remainingM, etaMin, offRoute, arrived: false })
     }
 
+    progressFnRef.current = updateProgress
+
     run()
     return () => {
       cancelled = true
-      if (clearWatch) clearWatch()
+      if (watchStopRef.current) watchStopRef.current()
+      if (simStopRef.current) simStopRef.current()
+      if (arrowTimerRef.current) clearTimeout(arrowTimerRef.current)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -164,6 +177,39 @@ export default function RouteMap({ destination, onBack }) {
     // destination 은 화면당 고정. 의존성 비움 의도.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // "시연 안내 시작" — 경로를 따라 현재 위치 점을 자동 주행시킨다(실제 이동 대체).
+  function handleStartGuide() {
+    const coords = routeCoordsRef.current
+    if (!coords || simStopRef.current) return
+
+    // 실시간 GPS 추적 중단(시연이 마커를 제어), 상태 초기화
+    if (watchStopRef.current) watchStopRef.current()
+    arrivedRef.current = false
+    offRouteRef.current = false
+    setNavigating(true)
+
+    simStopRef.current = startWalkSimulation({
+      coords,
+      stepM: 12, // 약 12m 간격으로 이동
+      intervalMs: 450, // 한 스텝 주기
+      marker: locMarkerRef.current,
+      map: mapRef.current,
+      onProgress: (p) => progressFnRef.current && progressFnRef.current(p),
+      onTurn: showTurnArrow,
+      onDone: () => {
+        simStopRef.current = null
+        setNavigating(false)
+      },
+    })
+  }
+
+  // 방향 화살표를 잠깐 띄웠다가(음성과 동시) 자동으로 숨긴다.
+  function showTurnArrow(dir) {
+    setTurnArrow(dir)
+    if (arrowTimerRef.current) clearTimeout(arrowTimerRef.current)
+    arrowTimerRef.current = setTimeout(() => setTurnArrow(null), 2600)
+  }
 
   const rec =
     result?.routes?.find((r) => r.route_id === result.recommended_route_id) ??
@@ -192,6 +238,11 @@ export default function RouteMap({ destination, onBack }) {
         {live?.offRoute && (
           <div className="off-route-banner">경로를 벗어났어요. 원래 길로 돌아가세요</div>
         )}
+        {turnArrow && (
+          <div className="turn-arrow-overlay">
+            <TurnArrow dir={turnArrow} />
+          </div>
+        )}
       </div>
 
       <div className="route-info">
@@ -217,10 +268,144 @@ export default function RouteMap({ destination, onBack }) {
                   : ' · 계단 없음'
                 : ''}
             </p>
+            <button
+              type="button"
+              className="guide-btn"
+              onClick={handleStartGuide}
+              disabled={status !== 'ready' || navigating}
+            >
+              {navigating ? '🧭 안내 중…' : '🧭 경로 안내 시작'}
+            </button>
           </>
         )}
       </div>
     </div>
+  )
+}
+
+// ── 시연 주행: 경로 좌표를 따라 마커를 자동 이동시키고 갈림길마다 TTS 안내 ──
+function startWalkSimulation({ coords, stepM, intervalMs, marker, map, onProgress, onTurn, onDone }) {
+  const steps = buildWalkSteps(coords, stepM)
+  let i = 0
+  const id = setInterval(() => {
+    if (i >= steps.length) {
+      clearInterval(id)
+      if (onDone) onDone()
+      return
+    }
+    const s = steps[i++]
+    if (marker) marker.setLatLng([s.lat, s.lng])
+    if (map) map.panTo([s.lat, s.lng])
+    if (s.say) {
+      if (onTurn) onTurn(s.dir) // 화살표 표시(음성과 동시)
+      speak(s.say)
+    }
+    if (onProgress) onProgress({ lat: s.lat, lng: s.lng })
+  }, intervalMs)
+  return () => clearInterval(id)
+}
+
+// 경로 좌표를 일정 간격으로 잘게 쪼개고, 각 구간 시작점에 좌/우회전 안내를 단다.
+function buildWalkSteps(coords, stepM) {
+  const steps = []
+  for (let seg = 0; seg < coords.length - 1; seg++) {
+    const a = coords[seg]
+    const b = coords[seg + 1]
+    const segLen = metersBetween(a, b)
+    const k = Math.max(1, Math.round(segLen / stepM))
+
+    // 이 구간을 시작할 때(= 정점 seg 통과) 안내 문구 + 화살표 방향
+    let say = null
+    let dir = null
+    if (seg === 0) {
+      say = '직진하세요'
+      dir = 'straight'
+    } else {
+      const d = turnDir(coords[seg - 1], coords[seg], coords[seg + 1])
+      if (d === 'left') {
+        say = '왼쪽으로 가세요'
+        dir = 'left'
+      } else if (d === 'right') {
+        say = '오른쪽으로 가세요'
+        dir = 'right'
+      }
+      // 직진은 안내 생략(반복 안내 방지)
+    }
+
+    for (let j = 0; j < k; j++) {
+      const t = j / k
+      steps.push({
+        lat: a[0] + (b[0] - a[0]) * t,
+        lng: a[1] + (b[1] - a[1]) * t,
+        say: j === 0 ? say : null,
+        dir: j === 0 ? dir : null,
+      })
+    }
+  }
+  const last = coords[coords.length - 1]
+  steps.push({ lat: last[0], lng: last[1], say: null, dir: null }) // 도착 안내는 updateProgress가 처리
+  return steps
+}
+
+// 두 좌표([lat,lng]) 사이 거리(m) 근사
+function metersBetween(a, b) {
+  const dLat = (b[0] - a[0]) * 111320
+  const dLng = (b[1] - a[1]) * 111320 * Math.cos((a[0] * Math.PI) / 180)
+  return Math.hypot(dLat, dLng)
+}
+
+// 정점 p1 에서의 진행 방향 변화 → 'left' | 'right' | 'straight'
+function turnDir(p0, p1, p2) {
+  const diff = ((bearing(p1, p2) - bearing(p0, p1) + 540) % 360) - 180
+  if (diff > 20) return 'right'
+  if (diff < -20) return 'left'
+  return 'straight'
+}
+
+// a→b 방위각(도, 북=0 시계방향). 좌표는 [lat,lng].
+function bearing(a, b) {
+  const toR = (d) => (d * Math.PI) / 180
+  const y = Math.sin(toR(b[1] - a[1])) * Math.cos(toR(b[0]))
+  const x =
+    Math.cos(toR(a[0])) * Math.sin(toR(b[0])) -
+    Math.sin(toR(a[0])) * Math.cos(toR(b[0])) * Math.cos(toR(b[1] - a[1]))
+  return (Math.atan2(y, x) * 180) / Math.PI
+}
+
+// 방향 화살표 — 직진 방향에서 꺾이는 ㄱ(엘보) 형태. 배경 없이 화살표만 렌더.
+function TurnArrow({ dir }) {
+  // shaft: 굵은 선(아래→위→꺾임), head: 끝의 삼각형
+  const shafts = {
+    straight: 'M50 90 L50 34',
+    right: 'M34 90 L34 46 L66 46',
+    left: 'M66 90 L66 46 L34 46',
+  }
+  const heads = {
+    straight: '50,16 38,40 62,40', // 위쪽 향함
+    right: '90,46 66,32 66,60', // 오른쪽 향함
+    left: '10,46 34,32 34,60', // 왼쪽 향함
+  }
+  return (
+    <svg viewBox="0 0 100 100" className="turn-arrow" role="img" aria-hidden="true">
+      <path
+        d={shafts[dir]}
+        fill="none"
+        stroke="#fff"
+        strokeWidth="20"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polygon points={heads[dir]} fill="none" stroke="#fff" strokeWidth="20" strokeLinejoin="round" />
+      <path
+        d={shafts[dir]}
+        fill="none"
+        stroke="#3f5a32"
+        strokeWidth="12"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polygon points={heads[dir]} fill="#3f5a32" />
+    </svg>
   )
 }
 
