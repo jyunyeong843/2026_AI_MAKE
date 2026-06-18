@@ -55,6 +55,10 @@ export default function RouteMap({ destination, onBack }) {
       if (cancelled) return
       setResult(scored)
 
+      // 채점기가 알려준 경로 시작점(user_location)이 있으면 현재 위치 점을 거기에 맞춘다.
+      // (데스크톱 등 GPS 부정확 시 경로와 점이 따로 노는 것을 방지)
+      const drawOrigin = scored?.origin ?? origin
+
       const rec =
         scored?.routes?.find((r) => r.route_id === scored.recommended_route_id) ??
         scored?.routes?.[0]
@@ -85,7 +89,7 @@ export default function RouteMap({ destination, onBack }) {
         }).addTo(map)
 
         // 현재 위치 — 녹색 점 (실시간으로 이동시킬 마커)
-        locMarkerRef.current = L.circleMarker([origin.lat, origin.lng], {
+        locMarkerRef.current = L.circleMarker([drawOrigin.lat, drawOrigin.lng], {
           radius: 11,
           color: '#fff',
           weight: 3,
@@ -106,7 +110,7 @@ export default function RouteMap({ destination, onBack }) {
       setStatus('ready')
 
       // 초기 진행 상태 한 번 계산
-      updateProgress(origin)
+      updateProgress(drawOrigin)
 
       // ── 실시간 GPS 추적 시작 ──
       clearWatch = watchPosition((pos) => {

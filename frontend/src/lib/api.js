@@ -3,24 +3,26 @@
 // CLAUDE.md 규칙: 경사/강수/비용 판단은 백엔드(채점 엔진)에서만 한다.
 // 프론트는 (1) 컨텍스트를 만들어 보내고, (2) 받은 좌표·추천 플래그를 그릴 뿐이다.
 //
-// 백엔드 채점 엔드포인트가 아직 없으면, CLAUDE.md 데이터 계약과 동일한 형태의
-// 로컬 mock 으로 폴백한다(데모가 단독으로 동작하도록).
-import { distanceM } from './geo'
+// 백엔드 채점 엔드포인트(/api/route/score)가 있으면 그 결과를 쓰고,
+// 없으면 채점 엔진이 미리 만들어 둔 route_mock.json(파이썬 출력)을 폴백으로 쓴다.
+// 어느 경우든 파이썬 출력 스키마를 프론트 계약 형태로 변환(normalize)한다.
+import routeMock from '../data/route_mock.json'
 
-const RULES = {
-  slope_warn_pct: 5,
-  slope_danger_pct: 10,
-  rain_threshold_mm: 10,
-  walk_speed_mps: 1.0,
-  weights: {
-    dry: { slope_5_10: 1.5, slope_over_10: 4.0, steps: 8.0, block_danger: false, block_steps: false },
-    wet: { slope_5_10: 4.0, slope_over_10: null, steps: null, block_danger: true, block_steps: true },
-  },
-}
+const RAIN_THRESHOLD_MM = 10
+const WALK_SPEED_MPS = 1.0
 
 // 메인 진입점: 출발지·도착지로 추천 경로(채점 결과)를 받는다.
 export async function getRecommendedRoute(origin, dest, { rainfall = 0 } = {}) {
-  const payload = buildPayload(origin, dest, rainfall)
+  const payload = {
+    context: {
+      user_location: { lat: origin.lat, lng: origin.lng },
+      rainfall_mm_per_h: rainfall,
+    },
+    facility: dest.facilityId
+      ? { id: dest.facilityId, name: dest.name.replace(/\n/g, ' ') }
+      : null,
+  }
+
   try {
     const res = await fetch('/api/route/score', {
       method: 'POST',
@@ -29,145 +31,131 @@ export async function getRecommendedRoute(origin, dest, { rainfall = 0 } = {}) {
     })
     if (res.ok) {
       const json = await res.json()
-      // 백엔드가 {data} 래핑을 쓰는 경우와 직접 반환 둘 다 허용
-      return json.data ?? json
+      return normalizeScorerOutput(json.data ?? json, dest)
     }
   } catch {
-    /* 네트워크/엔드포인트 없음 → mock 폴백 */
+    /* 네트워크/엔드포인트 없음 → 로컬 폴백 */
   }
-  return scorePayloadMock(payload)
+
+  // 폴백 1: 채점 데이터가 있는 도착지(동선동·삼선동)는 route_mock.json 사용
+  const hasMock =
+    dest.facilityId && (routeMock.routes || []).some((r) => r.dest_facility_id === dest.facilityId)
+  if (hasMock) return normalizeScorerOutput(routeMock, dest)
+
+  // 폴백 2: 형식상 도착지(성북구청·경로당 등)는 간단 합성 경로로 표시
+  return buildSyntheticResult(origin, dest, rainfall)
 }
 
-// CLAUDE.md 입력 스키마(context/facilities/routes) 구성
-function buildPayload(origin, dest, rainfall) {
-  return {
-    context: {
-      user_location: { lat: origin.lat, lng: origin.lng },
-      rainfall_mm_per_h: rainfall,
-      rules: RULES,
-    },
-    facilities: [
-      {
-        id: dest.id,
-        name: dest.name.replace(/\n/g, ' '),
-        category: dest.category,
-        lat: dest.lat,
-        lng: dest.lng,
-        distance_m: Math.round(distanceM(origin, dest)),
-      },
-    ],
-    routes: buildCandidateRoutes(origin, dest),
-  }
-}
-
-// 후보 경로 2개 생성: 최단 경로 + 경사 우회(무장애) 경로.
-// (실서비스에서는 osmnx 그래프가 만들지만, 데모용으로 좌표를 합성한다.)
-function buildCandidateRoutes(origin, dest) {
-  const shortest = makeRoute('r_short', '최단 경로', origin, dest, dest.id, {
-    bend: 0.0002,
-    grades: [2, 7, 12, 6], // 일부 가파른 구간 포함
-    steps: [false, false, true, false],
-  })
-  const accessible = makeRoute('r_acc', '경사로 우회경로', origin, dest, dest.id, {
-    bend: 0.0011,
-    detour: true,
-    grades: [2, 3, 4, 3, 2], // 완만한 구간 위주
-    steps: [false, false, false, false, false],
-  })
-  return [shortest, accessible]
-}
-
-// 출발→도착 사이를 구간(segment)으로 쪼개 합성한다.
-function makeRoute(route_id, label, origin, dest, dest_facility_id, opt) {
-  const n = opt.grades.length
-  const pts = [origin]
-  for (let i = 1; i < n; i++) {
+// 채점 데이터가 없는 도착지를 위한 간단 합성 우회경로(데모 형식용).
+// 출발→도착을 살짝 휘어 잇고, 거리/시간만 실제로 계산해 표시한다.
+function buildSyntheticResult(origin, dest, rainfall) {
+  const n = 6
+  const coords = []
+  for (let i = 0; i <= n; i++) {
     const t = i / n
     const lat = origin.lat + (dest.lat - origin.lat) * t
     const lng = origin.lng + (dest.lng - origin.lng) * t
-    // 경로가 한 줄로 겹치지 않게 좌우로 휜다. 우회 경로는 더 크게 우회.
-    const wobble = Math.sin(t * Math.PI) * opt.bend * (opt.detour ? 1 : -1)
-    pts.push({ lat: lat + wobble, lng: lng - wobble })
+    const wobble = Math.sin(t * Math.PI) * 0.0009 // 우회처럼 보이도록 좌우로 휨
+    coords.push([lat + wobble, lng - wobble])
   }
-  pts.push(dest)
-
-  const segments = []
-  for (let i = 0; i < pts.length - 1; i++) {
-    const a = pts[i]
-    const b = pts[i + 1]
-    segments.push({
-      seg_id: i,
-      coords: [[a.lat, a.lng], [b.lat, b.lng]],
-      length_m: Math.round(distanceM(a, b)),
-      grade_pct: opt.grades[i] ?? 2,
-      is_steps: opt.steps[i] ?? false,
-    })
+  const total = Math.round(routeLength(coords))
+  return {
+    mode: rainfall >= RAIN_THRESHOLD_MM ? 'wet' : 'dry',
+    rainfall_mm_per_h: rainfall,
+    recommended_route_id: 'r_demo',
+    origin: { lat: origin.lat, lng: origin.lng },
+    routes: [
+      {
+        route_id: 'r_demo',
+        label: '경사로 우회경로',
+        coords,
+        total_distance_m: total,
+        eta_min: Math.max(1, Math.round(total / WALK_SPEED_MPS / 60)),
+        max_grade_pct: 0,
+        stairs_count: 0,
+        cost: null,
+        blocked: false,
+      },
+    ],
   }
-  return { route_id, label, dest_facility_id, segments }
 }
 
-// ── 로컬 채점기 (CLAUDE.md 6장 비용 공식과 동일) ─────────────────
-function scorePayloadMock(payload) {
-  const rain = payload.context.rainfall_mm_per_h
-  const mode = rain >= RULES.rain_threshold_mm ? 'wet' : 'dry'
-  const w = RULES.weights[mode]
+// 파이썬 채점 출력(weather_mode / summary / segments / lon) → 프론트 계약 형태로 변환.
+// dest 가 주어지면 그 시설(facilityId)의 경로만 골라낸다.
+function normalizeScorerOutput(out, dest) {
+  const ctx = out.context || {}
+  const rain = ctx.rainfall_mm_per_h ?? out.rainfall_mm_per_h ?? 0
+  const mode = out.mode || out.weather_mode || (rain >= RAIN_THRESHOLD_MM ? 'wet' : 'dry')
 
-  const routes = payload.routes.map((r) => {
-    let total = 0
-    let cost = 0
-    let maxGrade = 0
-    let stairs = 0
-    let blocked = false
-    const flags = []
-    const coords = [r.segments[0].coords[0]]
+  // 선택한 도착지가 있으면 그 시설의 경로만, 없으면 전체.
+  const facilityId = dest?.facilityId
+  const raw = (out.routes || []).filter(
+    (r) => !facilityId || r.dest_facility_id === facilityId,
+  )
 
-    for (const s of r.segments) {
-      coords.push(s.coords[1])
-      total += s.length_m
-      maxGrade = Math.max(maxGrade, s.grade_pct)
-      const at = s.coords[1]
-
-      let mult = 1.0
-      if (s.is_steps) {
-        stairs += 1
-        if (w.block_steps) blocked = true
-        else mult = w.steps
-        flags.push({ type: 'steps', at })
-      } else if (s.grade_pct > RULES.slope_danger_pct) {
-        if (w.block_danger) blocked = true
-        else mult = w.slope_over_10
-        flags.push({ type: 'slope_over_10', at })
-      } else if (s.grade_pct >= RULES.slope_warn_pct) {
-        mult = w.slope_5_10
-        flags.push({ type: 'slope_5_10', at })
-      }
-      cost += s.length_m * mult
-    }
-
+  const routes = raw.map((r) => {
+    const s = r.summary || {}
+    const coords = flattenCoords(r)
+    const total = Math.round(r.total_distance_m ?? s.distance_m ?? routeLength(coords))
     return {
       route_id: r.route_id,
-      label: r.label,
+      label: normalizeLabel(r.label),
       coords,
       total_distance_m: total,
-      eta_min: Math.max(1, Math.round(total / RULES.walk_speed_mps / 60)),
-      max_grade_pct: Math.round(maxGrade * 10) / 10,
-      stairs_count: stairs,
-      cost: Math.round(cost * 10) / 10,
-      blocked,
-      flags,
+      eta_min: r.eta_min ?? s.eta_min ?? Math.max(1, Math.round(total / WALK_SPEED_MPS / 60)),
+      max_grade_pct: r.max_grade_pct ?? s.max_grade_pct ?? 0,
+      stairs_count: r.stairs_count ?? s.stairs ?? 0,
+      cost: r.cost ?? null,
+      blocked: r.blocked ?? false,
     }
   })
 
-  // 통행 가능한 경로 중 비용 최소를 추천
-  const usable = routes.filter((r) => !r.blocked)
-  const recommended = (usable.length ? usable : routes).reduce((best, r) =>
-    r.cost < best.cost ? r : best,
-  )
+  // 추천 경로: 파일의 recommended_route_id 가 이 시설 경로에 속하면 그걸,
+  // 아니면 '어르신 친화'(r_acc) 경로를, 그것도 없으면 거리 최소 경로를 추천.
+  let recommendedId = routes.find((r) => r.route_id === out.recommended_route_id)?.route_id
+  if (!recommendedId) {
+    const acc = routes.find((r) => r.route_id.startsWith('r_acc') || r.label.includes('우회'))
+    recommendedId = acc?.route_id ?? routes[0]?.route_id
+  }
 
   return {
     mode,
     rainfall_mm_per_h: rain,
-    recommended_route_id: recommended.route_id,
+    recommended_route_id: recommendedId,
+    // 현재 위치 점을 경로 시작점에 정확히 맞추기 위해 채점기의 user_location 을 함께 전달
+    origin: ctx.user_location ? { lat: ctx.user_location.lat, lng: ctx.user_location.lng } : null,
     routes,
   }
+}
+
+// '어르신 친화' / '최단' 라벨을 화면 표기에 맞춰 다듬는다.
+function normalizeLabel(label) {
+  if (!label) return '경로'
+  if (label.includes('친화') || label.includes('우회')) return '경사로 우회경로'
+  if (label.includes('최단')) return '최단 경로'
+  return label
+}
+
+// 경로의 모든 segment 좌표를 하나의 [[lat,lng],...] 배열로 평탄화(이음점 중복 제거).
+function flattenCoords(route) {
+  if (Array.isArray(route.coords) && route.coords.length) return route.coords
+  const out = []
+  for (const seg of route.segments || []) {
+    for (const c of seg.coords || []) {
+      const last = out[out.length - 1]
+      if (!last || last[0] !== c[0] || last[1] !== c[1]) out.push(c)
+    }
+  }
+  return out
+}
+
+// 좌표 배열의 대략적 총 길이(m) — total_distance 가 없을 때 보조용.
+function routeLength(coords) {
+  let m = 0
+  for (let i = 0; i < coords.length - 1; i++) {
+    const dLat = (coords[i + 1][0] - coords[i][0]) * 111320
+    const dLng = (coords[i + 1][1] - coords[i][1]) * 111320 * Math.cos((coords[i][0] * Math.PI) / 180)
+    m += Math.hypot(dLat, dLng)
+  }
+  return m
 }

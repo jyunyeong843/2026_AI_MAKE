@@ -1,0 +1,814 @@
+{
+  "context": {
+    "user_location": {
+      "lat": 37.5896611324901,
+      "lng": 127.019963630869
+    },
+    "rainfall_mm_per_h": 0.0,
+    "weather_mode": "dry",
+    "rules": {
+      "slope_warn_pct": 5,
+      "slope_danger_pct": 10,
+      "rain_threshold_mm": 10,
+      "walk_speed_mps": 1.0
+    }
+  },
+  "facilities": [
+    {
+      "id": "fac_001",
+      "name": "안암동복합청사",
+      "lat": 37.5858550036394,
+      "lng": 127.021366761072,
+      "distance_m": 440
+    },
+    {
+      "id": "fac_002",
+      "name": "안암동주민센터",
+      "lat": 37.585817166442304,
+      "lng": 127.02134184200641,
+      "distance_m": 443
+    },
+    {
+      "id": "fac_003",
+      "name": "동선동주민센터",
+      "lat": 37.5939893309527,
+      "lng": 127.02041567567342,
+      "distance_m": 482
+    },
+    {
+      "id": "fac_004",
+      "name": "삼선동주민센터",
+      "lat": 37.59082770536046,
+      "lng": 127.0146515622994,
+      "distance_m": 486
+    }
+  ],
+  "recommended_route_id": "r_acc_fac_001",
+  "no_safe_route": false,
+  "routes": [
+    {
+      "route_id": "r_short_fac_001",
+      "label": "최단",
+      "dest_facility_id": "fac_001",
+      "summary": {
+        "distance_m": 457,
+        "stairs": 1,
+        "max_grade_pct": 19.2,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.588984,
+              127.019959
+            ]
+          ],
+          "length_m": 75.3,
+          "grade_pct": 9.0,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588984,
+              127.019959
+            ],
+            [
+              37.588004,
+              127.020359
+            ]
+          ],
+          "length_m": 114.5,
+          "grade_pct": 19.2,
+          "is_steps": true
+        },
+        {
+          "coords": [
+            [
+              37.588004,
+              127.020359
+            ],
+            [
+              37.587519,
+              127.020912
+            ]
+          ],
+          "length_m": 72.7,
+          "grade_pct": 7.5,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.587519,
+              127.020912
+            ],
+            [
+              37.586852,
+              127.020838
+            ]
+          ],
+          "length_m": 74.5,
+          "grade_pct": 9.5,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.586852,
+              127.020838
+            ],
+            [
+              37.5858550036394,
+              127.021366761072
+            ]
+          ],
+          "length_m": 120.3,
+          "grade_pct": 6.2,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_acc_fac_001",
+      "label": "어르신 친화",
+      "dest_facility_id": "fac_001",
+      "summary": {
+        "distance_m": 452,
+        "stairs": 0,
+        "max_grade_pct": 4.3,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.588846,
+              127.020287
+            ]
+          ],
+          "length_m": 95.0,
+          "grade_pct": 1.1,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588846,
+              127.020287
+            ],
+            [
+              37.588419,
+              127.020264
+            ]
+          ],
+          "length_m": 47.5,
+          "grade_pct": 4.3,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588419,
+              127.020264
+            ],
+            [
+              37.587812,
+              127.020851
+            ]
+          ],
+          "length_m": 85.0,
+          "grade_pct": 1.8,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.587812,
+              127.020851
+            ],
+            [
+              37.586828,
+              127.021083
+            ]
+          ],
+          "length_m": 111.3,
+          "grade_pct": 0.9,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.586828,
+              127.021083
+            ],
+            [
+              37.586608,
+              127.021037
+            ]
+          ],
+          "length_m": 24.8,
+          "grade_pct": 0.9,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.586608,
+              127.021037
+            ],
+            [
+              37.5858550036394,
+              127.021366761072
+            ]
+          ],
+          "length_m": 88.6,
+          "grade_pct": 3.9,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_short_fac_002",
+      "label": "최단",
+      "dest_facility_id": "fac_002",
+      "summary": {
+        "distance_m": 450,
+        "stairs": 1,
+        "max_grade_pct": 25.9,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.588955,
+              127.020424
+            ]
+          ],
+          "length_m": 88.4,
+          "grade_pct": 10.3,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588955,
+              127.020424
+            ],
+            [
+              37.588261,
+              127.020537
+            ]
+          ],
+          "length_m": 77.8,
+          "grade_pct": 25.9,
+          "is_steps": true
+        },
+        {
+          "coords": [
+            [
+              37.588261,
+              127.020537
+            ],
+            [
+              37.587639,
+              127.020718
+            ]
+          ],
+          "length_m": 71.0,
+          "grade_pct": 10.0,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.587639,
+              127.020718
+            ],
+            [
+              37.586617,
+              127.021264
+            ]
+          ],
+          "length_m": 123.4,
+          "grade_pct": 10.9,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.586617,
+              127.021264
+            ],
+            [
+              37.585817166442304,
+              127.02134184200641
+            ]
+          ],
+          "length_m": 89.2,
+          "grade_pct": 6.3,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_acc_fac_002",
+      "label": "어르신 친화",
+      "dest_facility_id": "fac_002",
+      "summary": {
+        "distance_m": 451,
+        "stairs": 0,
+        "max_grade_pct": 4.2,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.588857,
+              127.020067
+            ]
+          ],
+          "length_m": 89.9,
+          "grade_pct": 1.6,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588857,
+              127.020067
+            ],
+            [
+              37.588128,
+              127.020263
+            ]
+          ],
+          "length_m": 82.9,
+          "grade_pct": 4.2,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.588128,
+              127.020263
+            ],
+            [
+              37.5875,
+              127.02052
+            ]
+          ],
+          "length_m": 73.4,
+          "grade_pct": 3.1,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.5875,
+              127.02052
+            ],
+            [
+              37.58718,
+              127.020801
+            ]
+          ],
+          "length_m": 43.3,
+          "grade_pct": 2.9,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.58718,
+              127.020801
+            ],
+            [
+              37.58638,
+              127.020938
+            ]
+          ],
+          "length_m": 89.8,
+          "grade_pct": 1.2,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.58638,
+              127.020938
+            ],
+            [
+              37.585817166442304,
+              127.02134184200641
+            ]
+          ],
+          "length_m": 72.0,
+          "grade_pct": 3.4,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_short_fac_003",
+      "label": "최단",
+      "dest_facility_id": "fac_003",
+      "summary": {
+        "distance_m": 485,
+        "stairs": 1,
+        "max_grade_pct": 19.3,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.590325,
+              127.019982
+            ]
+          ],
+          "length_m": 73.8,
+          "grade_pct": 7.6,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590325,
+              127.019982
+            ],
+            [
+              37.591686,
+              127.020228
+            ]
+          ],
+          "length_m": 152.9,
+          "grade_pct": 19.3,
+          "is_steps": true
+        },
+        {
+          "coords": [
+            [
+              37.591686,
+              127.020228
+            ],
+            [
+              37.592292,
+              127.020346
+            ]
+          ],
+          "length_m": 68.2,
+          "grade_pct": 8.2,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.592292,
+              127.020346
+            ],
+            [
+              37.593329,
+              127.020491
+            ]
+          ],
+          "length_m": 116.0,
+          "grade_pct": 7.9,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.593329,
+              127.020491
+            ],
+            [
+              37.5939893309527,
+              127.02041567567342
+            ]
+          ],
+          "length_m": 73.7,
+          "grade_pct": 7.5,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_acc_fac_003",
+      "label": "어르신 친화",
+      "dest_facility_id": "fac_003",
+      "summary": {
+        "distance_m": 495,
+        "stairs": 0,
+        "max_grade_pct": 4.5,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.590648,
+              127.020265
+            ]
+          ],
+          "length_m": 112.9,
+          "grade_pct": 1.6,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590648,
+              127.020265
+            ],
+            [
+              37.590993,
+              127.020208
+            ]
+          ],
+          "length_m": 38.7,
+          "grade_pct": 2.8,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590993,
+              127.020208
+            ],
+            [
+              37.591763,
+              127.020438
+            ]
+          ],
+          "length_m": 88.0,
+          "grade_pct": 4.1,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.591763,
+              127.020438
+            ],
+            [
+              37.592522,
+              127.020124
+            ]
+          ],
+          "length_m": 88.8,
+          "grade_pct": 2.1,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.592522,
+              127.020124
+            ],
+            [
+              37.593116,
+              127.020377
+            ]
+          ],
+          "length_m": 69.7,
+          "grade_pct": 1.4,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.593116,
+              127.020377
+            ],
+            [
+              37.5939893309527,
+              127.02041567567342
+            ]
+          ],
+          "length_m": 97.2,
+          "grade_pct": 4.5,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_short_fac_004",
+      "label": "최단",
+      "dest_facility_id": "fac_004",
+      "summary": {
+        "distance_m": 507,
+        "stairs": 1,
+        "max_grade_pct": 27.0,
+        "eta_min": 8
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.5899,
+              127.018656
+            ]
+          ],
+          "length_m": 118.2,
+          "grade_pct": 8.7,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.5899,
+              127.018656
+            ],
+            [
+              37.589856,
+              127.017605
+            ]
+          ],
+          "length_m": 92.7,
+          "grade_pct": 27.0,
+          "is_steps": true
+        },
+        {
+          "coords": [
+            [
+              37.589856,
+              127.017605
+            ],
+            [
+              37.590438,
+              127.016952
+            ]
+          ],
+          "length_m": 86.6,
+          "grade_pct": 9.7,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590438,
+              127.016952
+            ],
+            [
+              37.590548,
+              127.015452
+            ]
+          ],
+          "length_m": 132.7,
+          "grade_pct": 12.8,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590548,
+              127.015452
+            ],
+            [
+              37.59082770536046,
+              127.0146515622994
+            ]
+          ],
+          "length_m": 77.1,
+          "grade_pct": 12.0,
+          "is_steps": false
+        }
+      ]
+    },
+    {
+      "route_id": "r_acc_fac_004",
+      "label": "어르신 친화",
+      "dest_facility_id": "fac_004",
+      "summary": {
+        "distance_m": 512,
+        "stairs": 0,
+        "max_grade_pct": 4.2,
+        "eta_min": 9
+      },
+      "segments": [
+        {
+          "coords": [
+            [
+              37.5896611324901,
+              127.019963630869
+            ],
+            [
+              37.589562,
+              127.019211
+            ]
+          ],
+          "length_m": 67.2,
+          "grade_pct": 4.0,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.589562,
+              127.019211
+            ],
+            [
+              37.590159,
+              127.018215
+            ]
+          ],
+          "length_m": 110.0,
+          "grade_pct": 1.6,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590159,
+              127.018215
+            ],
+            [
+              37.590105,
+              127.017392
+            ]
+          ],
+          "length_m": 72.8,
+          "grade_pct": 2.5,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590105,
+              127.017392
+            ],
+            [
+              37.590206,
+              127.016383
+            ]
+          ],
+          "length_m": 89.6,
+          "grade_pct": 1.2,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590206,
+              127.016383
+            ],
+            [
+              37.590606,
+              127.015809
+            ]
+          ],
+          "length_m": 67.4,
+          "grade_pct": 4.2,
+          "is_steps": false
+        },
+        {
+          "coords": [
+            [
+              37.590606,
+              127.015809
+            ],
+            [
+              37.59082770536046,
+              127.0146515622994
+            ]
+          ],
+          "length_m": 104.9,
+          "grade_pct": 4.0,
+          "is_steps": false
+        }
+      ]
+    }
+  ]
+}
