@@ -183,6 +183,145 @@
   white-space: nowrap;
 }
 
+/* ── 세 번째 화면: 도착 완료 ───────────────────────── */
+.arrival {
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  padding: 48px 24px 28px;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--green-soft) 100%);
+}
+
+.arrival-badge {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--green);
+  display: grid;
+  place-items: center;
+  margin: 24px 0 30px;
+  box-shadow: 0 22px 44px -18px rgba(79, 107, 65, 0.9);
+  animation: arr-pop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.arrival-badge svg {
+  width: 48%;
+  height: 48%;
+}
+
+.arrival-ray {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 3px dashed var(--ring, #d9cfa6);
+  animation: arr-spin 28s linear infinite;
+}
+
+@keyframes arr-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes arr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.arrival-title {
+  color: var(--ink);
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 0;
+}
+
+.arrival-place {
+  color: var(--green-dark);
+  font-size: 23px;
+  font-weight: 800;
+  margin-top: 10px;
+}
+
+.arrival-summary {
+  margin-top: 22px;
+  background: #fff;
+  border: 1px solid var(--cream-border);
+  border-radius: 22px;
+  padding: 18px 26px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.arrival-summary em {
+  font-style: normal;
+  color: var(--green-dark);
+}
+
+.arrival-spacer {
+  flex: 1;
+  min-height: 24px;
+}
+
+.arrival-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.arrival-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 68px;
+  border: none;
+  border-radius: 22px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  transition: transform 0.12s ease, filter 0.15s ease, background 0.15s ease;
+}
+
+.arrival-btn svg {
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.arrival-btn:active {
+  transform: scale(0.97);
+}
+
+.arrival-btn.primary {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 14px 26px -14px rgba(79, 107, 65, 0.85);
+}
+
+.arrival-btn.primary:active {
+  filter: brightness(0.94);
+}
+
+.arrival-btn.ghost {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+.arrival-btn.ghost:active {
+  background: #e3e2d6;
+}
+
 /* 방향 안내 화살표 — 오른쪽 상단(헤더 아래)에 배경 없이 떠오른다(음성과 동시).
    현재 위치 점의 이동을 가리지 않도록 중앙이 아닌 우상단에 배치한다. */
 .turn-arrow-overlay {

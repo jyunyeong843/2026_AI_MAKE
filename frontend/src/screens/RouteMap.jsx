@@ -19,7 +19,7 @@ const ARRIVE_M = 20 // 도착지 이내로 들어오면 도착 처리
 // 3) GPS 실시간 추적(모바일) 또는 "시연 안내"(데스크톱)로 현재 위치 점이 경로를 따라
 //    이동하며, 남은 거리/시간 갱신·갈림길 TTS·도착 안내를 한다.
 //    (경사/강수/비용 판단은 백엔드 채점 결과를 그대로 표시할 뿐 — CLAUDE.md 규칙)
-export default function RouteMap({ destination, onBack }) {
+export default function RouteMap({ destination, onBack, onArrive }) {
   const mapEl = useRef(null)
   const mapRef = useRef(null)
   const locMarkerRef = useRef(null) // 현재 위치 점
@@ -30,12 +30,20 @@ export default function RouteMap({ destination, onBack }) {
   const simStopRef = useRef(null) // 시연 주행 중단 함수
   const progressFnRef = useRef(null) // updateProgress 참조 (버튼 핸들러에서 호출)
   const arrowTimerRef = useRef(null) // 방향 화살표 자동 숨김 타이머
+  const arriveTimerRef = useRef(null) // 도착 화면 전환 타이머
+  const recInfoRef = useRef(null) // 도착 화면에 넘길 추천 경로 요약 {name, etaMin, stairs}
+  const onArriveRef = useRef(onArrive) // 최신 onArrive 콜백 보관
 
   const [status, setStatus] = useState('loading') // loading | ready
   const [result, setResult] = useState(null) // 채점 엔진 출력
   const [live, setLive] = useState(null) // { remainingM, etaMin, offRoute, arrived }
   const [navigating, setNavigating] = useState(false) // 시연 주행 중 여부
   const [turnArrow, setTurnArrow] = useState(null) // 'left' | 'right' | 'straight' | null
+
+  // 최신 onArrive 콜백을 ref 에 동기화(도착 타이머 콜백에서 사용)
+  useEffect(() => {
+    onArriveRef.current = onArrive
+  }, [onArrive])
 
   // TTS 안내 — 화면 진입 시 1회.
   useEffect(() => {
@@ -73,6 +81,13 @@ export default function RouteMap({ destination, onBack }) {
           [destination.lat, destination.lng],
         ]
       routeCoordsRef.current = line
+
+      // 도착 화면에 넘길 추천 경로 요약 저장
+      recInfoRef.current = {
+        name: destination.name.replace(/\n/g, ' '),
+        etaMin: rec?.eta_min ?? null,
+        stairs: rec?.stairs_count ?? 0,
+      }
 
       // ── 지도 렌더 ──
       if (mapEl.current && !mapRef.current) {
@@ -156,6 +171,10 @@ export default function RouteMap({ destination, onBack }) {
           simStopRef.current()
           simStopRef.current = null
         }
+        // 도착 안내(TTS·🎉)를 잠깐 보여준 뒤 도착 화면으로 전환
+        arriveTimerRef.current = setTimeout(() => {
+          if (onArriveRef.current) onArriveRef.current(recInfoRef.current)
+        }, 1400)
         return
       }
 
@@ -179,6 +198,7 @@ export default function RouteMap({ destination, onBack }) {
       if (watchStopRef.current) watchStopRef.current()
       if (simStopRef.current) simStopRef.current()
       if (arrowTimerRef.current) clearTimeout(arrowTimerRef.current)
+      if (arriveTimerRef.current) clearTimeout(arriveTimerRef.current)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -202,7 +222,7 @@ export default function RouteMap({ destination, onBack }) {
     simStopRef.current = startWalkSimulation({
       coords,
       stepM: 12, // 약 12m 간격으로 이동
-      intervalMs: 450, // 한 스텝 주기
+      intervalMs: 643, // 한 스텝 주기 (기존 450ms의 0.7배속)
       marker: locMarkerRef.current,
       map: mapRef.current,
       onProgress: (p) => progressFnRef.current && progressFnRef.current(p),
