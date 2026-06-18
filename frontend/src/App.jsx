@@ -40,7 +40,6 @@ function App() {
         destinationName={arrival.name}
         etaMin={arrival.etaMin}
         stairsCount={arrival.stairs}
-        onHome={handleRestart}
         onRestart={handleRestart}
       />
     )
