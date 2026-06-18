@@ -65,8 +65,8 @@
 .dest-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 0 22px 8px;
+  gap: 16px;
+  padding: 0 16px 8px;
 }
 
 .dest-card {
@@ -102,18 +102,18 @@
   align-items: center;
   text-align: center;
   width: 100%;
-  padding: 0 10px;
+  padding: 0 4px;
   color: var(--ink);
-  font-size: 32px;
+  font-size: 25px; /* 좁아진 아이폰 프레임 카드 폭에 한 줄이 들어가는 크기 */
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
-/* 긴 이름(예: "보문느티나무")은 카드 폭에 맞춰 줄바꿈 */
+/* 각 줄은 의도한 위치(\n)에서만 끊고, 한국어 단어는 중간에서 끊지 않는다 */
 .dest-name span {
   max-width: 100%;
-  overflow-wrap: anywhere;
   word-break: keep-all;
+  overflow-wrap: anywhere; /* 그래도 넘칠 때만 최후의 줄바꿈 */
 }
 
 /* ── 두 번째 화면: 지도 ───────────────────────────── */
