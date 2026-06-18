@@ -1,10 +1,14 @@
-// 도착지 목록 (첫 화면 2x2 버튼)
+// 도착지 목록 (첫 화면 카드)
 // 좌표는 항상 [위도(lat), 경도(lng)] 순서를 따른다 — CLAUDE.md 규칙.
 // category 는 CLAUDE.md 시설 카테고리 enum 을 따른다.
 //
 // facilityId 가 있는 도착지(동선동·삼선동)는 route_mock.json 의 실제 채점 경로를 쓴다.
-// facilityId 가 없는 도착지(성북구청·경로당)는 시연용 형식 카드로, 간단 합성 경로를 그린다.
+// facilityId 가 없는 도착지는 시연용 형식 카드로, 간단 합성 경로를 그린다.
+//
+// ⚠️ 아래 신규 도착지 좌표 대부분은 성북구 일대 기준 "근사 좌표"다.
+//    실제 시설 좌표가 확정되면 교체할 것.
 export const DESTINATIONS = [
+  // ── 구청 ──────────────────────────────────────────
   {
     id: 'seongbuk_gu_office',
     name: '성북구청',
@@ -13,6 +17,8 @@ export const DESTINATIONS = [
     lat: 37.5894,
     lng: 127.0167,
   },
+
+  // ── 주민센터 ──────────────────────────────────────
   {
     id: 'dongseon_dong_center',
     facilityId: 'fac_003',
@@ -23,14 +29,6 @@ export const DESTINATIONS = [
     lng: 127.02041567567342,
   },
   {
-    id: 'senior_center',
-    name: '경로당',
-    category: 'senior_center',
-    icon: 'people',
-    lat: 37.5905,
-    lng: 127.019,
-  },
-  {
     id: 'samseon_dong_center',
     facilityId: 'fac_004',
     name: '삼선동\n주민센터',
@@ -38,6 +36,112 @@ export const DESTINATIONS = [
     icon: 'building',
     lat: 37.59082770536046,
     lng: 127.0146515622994,
+  },
+  {
+    id: 'anam_dong_center',
+    name: '안암동\n주민센터',
+    category: 'community_center',
+    icon: 'building',
+    lat: 37.5852,
+    lng: 127.0286,
+  },
+  {
+    id: 'bomun_dong_center',
+    name: '보문동\n주민센터',
+    category: 'community_center',
+    icon: 'building',
+    lat: 37.5859,
+    lng: 127.0188,
+  },
+  {
+    id: 'sungin1_dong_center',
+    name: '숭인1동\n주민센터',
+    category: 'community_center',
+    icon: 'building',
+    lat: 37.5763,
+    lng: 127.0156,
+  },
+  {
+    id: 'sungin2_dong_center',
+    name: '숭인2동\n주민센터',
+    category: 'community_center',
+    icon: 'building',
+    lat: 37.5748,
+    lng: 127.0189,
+  },
+  {
+    id: 'sinseol_dong_center',
+    name: '신설동\n주민센터',
+    category: 'community_center',
+    icon: 'building',
+    lat: 37.5768,
+    lng: 127.0254,
+  },
+
+  // ── 경로당 (노인정) ──────────────────────────────
+  {
+    id: 'bomun_neutinamu_senior',
+    name: '보문\n느티나무\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5862,
+    lng: 127.0195,
+  },
+  {
+    id: 'bomun2_dong_senior',
+    name: '보문제2동\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5868,
+    lng: 127.0202,
+  },
+  {
+    id: 'dongwon_senior',
+    name: '동원\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.591,
+    lng: 127.0175,
+  },
+  {
+    id: 'anam3ga_senior',
+    name: '안암동3가\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5848,
+    lng: 127.0282,
+  },
+  {
+    id: 'hanmadang_senior',
+    name: '한마당\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5905,
+    lng: 127.0188,
+  },
+  {
+    id: 'anam_dong_nojeong',
+    name: '안암동\n노인정',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5855,
+    lng: 127.029,
+  },
+  {
+    id: 'anam2ga_senior',
+    name: '안암2가\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.586,
+    lng: 127.027,
+  },
+  {
+    id: 'bomun1_senior',
+    name: '보문제1\n경로당',
+    category: 'senior_center',
+    icon: 'people',
+    lat: 37.5872,
+    lng: 127.0185,
   },
 ]
 
