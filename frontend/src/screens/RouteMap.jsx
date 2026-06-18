@@ -110,6 +110,16 @@ export default function RouteMap({ destination, onBack }) {
           .bindTooltip(destination.name.replace(/\n/g, ' '), { direction: 'top' })
 
         map.fitBounds(route.getBounds().pad(0.25))
+
+        // 비동기 로딩 직후엔 컨테이너 크기 인식이 안 돼 타일이 흰 화면으로 뜨기 쉽다.
+        // 레이아웃이 잡힌 뒤 크기를 다시 알려주고(fitBounds 재적용) 흰 화면을 막는다.
+        const refit = () => {
+          if (!mapRef.current) return
+          mapRef.current.invalidateSize()
+          mapRef.current.fitBounds(route.getBounds().pad(0.25))
+        }
+        requestAnimationFrame(refit)
+        setTimeout(refit, 300)
       }
 
       setStatus('ready')

@@ -21,6 +21,13 @@ export async function getRecommendedRoute(origin, dest, { rainfall = 0 } = {}) {
     facility: dest.facilityId
       ? { id: dest.facilityId, name: dest.name.replace(/\n/g, ' ') }
       : null,
+    // 목적지 좌표를 함께 보내면 백엔드가 시설 4개뿐 아니라 모든 목적지를 ORS로 라우팅한다.
+    dest: {
+      lat: dest.lat,
+      lng: dest.lng,
+      facilityId: dest.facilityId ?? null,
+      name: dest.name.replace(/\n/g, ' '),
+    },
   }
 
   try {
